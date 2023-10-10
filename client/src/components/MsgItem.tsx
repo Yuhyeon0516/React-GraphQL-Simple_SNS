@@ -17,6 +17,7 @@ export default function MsgItem({ id, userId, timestamp, text }: MsgType) {
                     })}
                 </sub>
             </h3>
+
             {text}
         </li>
     );
