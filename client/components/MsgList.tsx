@@ -11,6 +11,7 @@ function getRandomUserId() {
 
 export default function MsgList() {
     const [msgs, setMsgs] = useState<MsgType[]>([]);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     useEffect(() => {
         setMsgs(
@@ -37,12 +38,52 @@ export default function MsgList() {
         setMsgs((msgs) => [newMsg, ...msgs]);
     }
 
+    function onUpdate(text: string, id: number) {
+        setMsgs((msgs) => {
+            const targetIndex = msgs.findIndex((msg) => msg.id === id);
+            if (targetIndex < 0) return msgs;
+
+            const newMsgs = [...msgs];
+            newMsgs.splice(targetIndex, 1, {
+                ...msgs[targetIndex],
+                text,
+            });
+
+            return newMsgs;
+        });
+
+        doneEdit();
+    }
+
+    function doneEdit() {
+        setEditingId(null);
+    }
+
+    function onDelete(id: number) {
+        setMsgs((msgs) => {
+            const targetIndex = msgs.findIndex((msg) => msg.id === id);
+            if (targetIndex < 0) return msgs;
+
+            const newMsgs = [...msgs];
+            newMsgs.splice(targetIndex, 1);
+
+            return newMsgs;
+        });
+    }
+
     return (
         <>
-            <MsgInput mutate={onCreate} />
+            <MsgInput mutate={onCreate} text="" />
             <ul className="messages">
                 {msgs.map((msg) => (
-                    <MsgItem key={msg.id} {...msg} />
+                    <MsgItem
+                        key={msg.id}
+                        {...msg}
+                        onUpdate={onUpdate}
+                        startEdit={() => setEditingId(msg.id)}
+                        isEditing={editingId === msg.id}
+                        onDelete={() => onDelete(msg.id)}
+                    />
                 ))}
             </ul>
         </>
