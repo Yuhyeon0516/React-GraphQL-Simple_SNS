@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MsgType } from '../types/type';
 import MsgItem from './MsgItem';
+import MsgInput from './MsgInput';
 
 const UserIds = ['roy', 'jay'];
 
@@ -25,11 +26,25 @@ export default function MsgList() {
         );
     }, []);
 
+    function onCreate(text: string) {
+        const newMsg: MsgType = {
+            id: msgs.length + 1,
+            userId: getRandomUserId(),
+            timestamp: Date.now(),
+            text: `${msgs.length + 1} ${text}`,
+        };
+
+        setMsgs((msgs) => [newMsg, ...msgs]);
+    }
+
     return (
-        <ul className="messages">
-            {msgs.map((msg) => (
-                <MsgItem key={msg.id} {...msg} />
-            ))}
-        </ul>
+        <>
+            <MsgInput mutate={onCreate} />
+            <ul className="messages">
+                {msgs.map((msg) => (
+                    <MsgItem key={msg.id} {...msg} />
+                ))}
+            </ul>
+        </>
     );
 }
