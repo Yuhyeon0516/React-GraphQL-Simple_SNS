@@ -7,7 +7,7 @@ const usersSchema = gql`
     }
 
     extend type Query {
-        users(): [User!]!
+        users: [User!]!
         user(id: ID!): User
     }
 `;
