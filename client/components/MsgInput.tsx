@@ -1,14 +1,6 @@
 import React, { useRef } from 'react';
 
-export default function MsgInput({
-    mutate,
-    id = undefined,
-    text,
-}: {
-    mutate: ((text: string) => void) | ((text: string, id?: string) => void);
-    id?: string | undefined;
-    text: string;
-}) {
+export default function MsgInput({ mutate, id = undefined, text }: { mutate: any; id?: string | undefined; text: string }) {
     const textRef = useRef<HTMLTextAreaElement | null>(null);
 
     function onSubmit(e: React.FormEvent) {
@@ -17,7 +9,7 @@ export default function MsgInput({
 
         const text = textRef.current.value;
         textRef.current.value = '';
-        mutate(text, id);
+        mutate({ text, id });
     }
 
     return (
