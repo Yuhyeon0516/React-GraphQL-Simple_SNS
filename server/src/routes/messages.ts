@@ -1,11 +1,6 @@
-import { Request, Response } from 'express';
-import { readDB } from '../dbController';
-
-interface MessagesRouteType {
-    method: string;
-    route: string;
-    handler: (req: Request, res: Response) => void;
-}
+import { v4 } from 'uuid';
+import { readDB, writeDB } from '../dbController';
+import { MessagesRouteType, MsgType } from '../types/type';
 
 const messagesRoute: MessagesRouteType[] = [
     {
@@ -22,7 +17,18 @@ const messagesRoute: MessagesRouteType[] = [
         method: 'post',
         route: '/messages',
         handler: (req, res) => {
-            res.send();
+            const { body } = req;
+            const msgs = readDB('messages');
+            const newMsg: MsgType = {
+                id: v4(),
+                text: body.text,
+                userId: body.userId,
+                timestamp: Date.now(),
+            };
+
+            msgs.unshift(newMsg);
+            writeDB('messages', msgs);
+            res.send(newMsg);
         },
     },
     {
@@ -30,6 +36,7 @@ const messagesRoute: MessagesRouteType[] = [
         method: 'put',
         route: '/messages/:id',
         handler: (req, res) => {
+            const msgs = readDB('messages');
             res.send();
         },
     },
@@ -38,6 +45,7 @@ const messagesRoute: MessagesRouteType[] = [
         method: 'delete',
         route: '/messages/:id',
         handler: (req, res) => {
+            const msgs = readDB('messages');
             res.send();
         },
     },
