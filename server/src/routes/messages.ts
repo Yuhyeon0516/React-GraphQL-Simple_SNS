@@ -36,8 +36,24 @@ const messagesRoute: MessagesRouteType[] = [
         method: 'put',
         route: '/messages/:id',
         handler: (req, res) => {
-            const msgs = readDB('messages');
-            res.send();
+            const {
+                body,
+                params: { id },
+            } = req;
+
+            try {
+                const msgs = readDB('messages');
+                const targetIndex = msgs.findIndex((msg) => msg.id === id);
+                if (targetIndex < 0) throw '메시지가 없습니다.';
+                if (msgs[targetIndex].userId === body.userId) throw '사용자가 다릅니다.';
+
+                const newMsg = { ...msgs[targetIndex], text: body.text };
+                msgs.splice(targetIndex, 1, newMsg);
+                writeDB('messages', msgs);
+                res.send(newMsg);
+            } catch (error) {
+                res.status(500).send({ error: error });
+            }
         },
     },
     {
