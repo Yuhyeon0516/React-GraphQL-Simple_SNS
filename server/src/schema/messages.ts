@@ -4,7 +4,7 @@ const messagesSchema = gql`
     type Message {
         id: ID!
         text: String!
-        user: User!
+        userId: ID!
         timestamp: Float
     }
 
