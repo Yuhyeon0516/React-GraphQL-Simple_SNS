@@ -44,8 +44,9 @@ const messagesRoute: RouteType[] = [
             try {
                 const msgs = readDB('messages');
                 const targetIndex = msgs.findIndex((msg) => msg.id === id);
+
                 if (targetIndex < 0) throw '메시지가 없습니다.';
-                if (msgs[targetIndex].userId === body.userId) throw '사용자가 다릅니다.';
+                if (msgs[targetIndex].userId !== body.userId) throw '사용자가 다릅니다.';
 
                 const newMsg = { ...msgs[targetIndex], text: body.text };
                 msgs.splice(targetIndex, 1, newMsg);
@@ -58,8 +59,8 @@ const messagesRoute: RouteType[] = [
     },
     {
         // delete message
-        method: 'delete',
-        route: '/messages/:id',
+        method: 'put',
+        route: '/messages/delete/:id',
         handler: (req, res) => {
             const {
                 body,
@@ -70,7 +71,7 @@ const messagesRoute: RouteType[] = [
                 const msgs = readDB('messages');
                 const targetIndex = msgs.findIndex((msg) => msg.id === id);
                 if (targetIndex < 0) throw '메시지가 없습니다.';
-                if (msgs[targetIndex].userId === body.userId) throw '사용자가 다릅니다.';
+                if (msgs[targetIndex].userId !== body.userId) throw '사용자가 다릅니다.';
 
                 msgs.splice(targetIndex, 1);
                 writeDB('messages', msgs);

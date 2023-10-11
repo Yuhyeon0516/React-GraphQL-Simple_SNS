@@ -2,52 +2,41 @@ import React, { useEffect, useState } from 'react';
 import { MsgType } from '../types/type';
 import MsgItem from './MsgItem';
 import MsgInput from './MsgInput';
-
-const UserIds = ['roy', 'jay'];
-
-function getRandomUserId() {
-    return UserIds[Math.round(Math.random())];
-}
+import fetcher from '../utils/fetcher';
+import { useRouter } from 'next/router';
 
 export default function MsgList() {
+    const {
+        query: { userId = '' },
+    } = useRouter();
     const [msgs, setMsgs] = useState<MsgType[]>([]);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
-    useEffect(() => {
-        setMsgs(
-            Array(50)
-                .fill(0)
-                .map((_, index) => ({
-                    id: index + 1,
-                    userId: getRandomUserId(),
-                    timestamp: 1234567890123 + index * 1000 * 60,
-                    text: `${index + 1} mock text`,
-                }))
-                .reverse(),
-        );
-    }, []);
+    async function onCreate(text: string) {
+        const newMsg = await fetcher.post('/messages', {
+            text: text,
+            userId: userId,
+        });
 
-    function onCreate(text: string) {
-        const newMsg: MsgType = {
-            id: msgs.length + 1,
-            userId: getRandomUserId(),
-            timestamp: Date.now(),
-            text: `${msgs.length + 1} ${text}`,
-        };
+        if (!newMsg) return;
 
-        setMsgs((msgs) => [newMsg, ...msgs]);
+        setMsgs((msgs) => [newMsg.data, ...msgs]);
     }
 
-    function onUpdate(text: string, id: number) {
+    async function onUpdate(text: string, id: string) {
+        const newMsg = await fetcher.put(`/messages/${id}`, {
+            text: text,
+            userId: userId,
+        });
+
+        if (!newMsg.data) return;
+
         setMsgs((msgs) => {
             const targetIndex = msgs.findIndex((msg) => msg.id === id);
             if (targetIndex < 0) return msgs;
 
             const newMsgs = [...msgs];
-            newMsgs.splice(targetIndex, 1, {
-                ...msgs[targetIndex],
-                text,
-            });
+            newMsgs.splice(targetIndex, 1, newMsg.data);
 
             return newMsgs;
         });
@@ -59,9 +48,13 @@ export default function MsgList() {
         setEditingId(null);
     }
 
-    function onDelete(id: number) {
+    async function onDelete(id: string) {
+        const { data: receivedId } = await fetcher.put(`/messages/delete/${id}`, {
+            userId: userId,
+        });
+
         setMsgs((msgs) => {
-            const targetIndex = msgs.findIndex((msg) => msg.id === id);
+            const targetIndex = msgs.findIndex((msg) => msg.id === receivedId);
             if (targetIndex < 0) return msgs;
 
             const newMsgs = [...msgs];
@@ -70,6 +63,15 @@ export default function MsgList() {
             return newMsgs;
         });
     }
+
+    async function getMessages() {
+        const msgs = await fetcher.get('/messages');
+        setMsgs(msgs.data);
+    }
+
+    useEffect(() => {
+        getMessages();
+    }, []);
 
     return (
         <>
@@ -83,6 +85,7 @@ export default function MsgList() {
                         startEdit={() => setEditingId(msg.id)}
                         isEditing={editingId === msg.id}
                         onDelete={() => onDelete(msg.id)}
+                        myId={userId}
                     />
                 ))}
             </ul>
