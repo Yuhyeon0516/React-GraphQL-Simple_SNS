@@ -6,11 +6,11 @@ import fetcher from '../utils/fetcher';
 import { useRouter } from 'next/router';
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
-export default function MsgList() {
+export default function MsgList({ smsgs }) {
     const {
         query: { userId = '' },
     } = useRouter();
-    const [msgs, setMsgs] = useState<MsgType[]>([]);
+    const [msgs, setMsgs] = useState<MsgType[]>(smsgs);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [hasNext, setHasNext] = useState(true);
     const fetchMoreEl = useRef(null);
