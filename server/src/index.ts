@@ -1,25 +1,39 @@
 import express from 'express';
-import cors from 'cors';
-import messagesRoute from './routes/messages';
-import usersRoute from './routes/users';
+import { ApolloServer } from 'apollo-server-express';
+import resolvers from './resolvers/index';
+import schema from './schema/index';
+import { readDB } from './dbController';
+
+const server = new ApolloServer({
+    typeDefs: schema,
+    resolvers,
+    context: {
+        db: {
+            messages: readDB('messages'),
+            users: readDB('users'),
+        },
+    },
+});
 
 const app = express();
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 
-app.use(
-    cors({
-        origin: 'http://localhost:3000',
-        credentials: true,
-    }),
-);
+async function serverStart() {
+    await server.start();
+    server.applyMiddleware({
+        app,
+        path: '/graphql',
+        cors: {
+            origin: ['http://localhost:3000', 'https://studio.apollographql.com'],
+            credentials: true,
+        },
+    });
+}
 
-const routes = [...messagesRoute, ...usersRoute];
+serverStart();
 
-routes.forEach(({ method, route, handler }) => {
-    app[method](route, handler);
-});
-
-app.listen(8000, () => {
+async function appListen() {
+    await app.listen({ port: 8000 });
     console.log('server listening on 8000');
-});
+}
+
+appListen();
