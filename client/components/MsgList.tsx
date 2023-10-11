@@ -4,17 +4,19 @@ import MsgItem from './MsgItem';
 import MsgInput from './MsgInput';
 import { useRouter } from 'next/router';
 import { QueryKeys, fetcher } from '../utils/queryClient';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from 'react-query';
 import { CREATE_MESSAGE, DELETE_MESSAGE, GET_MESSAGES, UPDATE_MESSAGE } from '../graphql/messages';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
 export default function MsgList({ smsgs, users }) {
     const client = useQueryClient();
     const {
         query: { userId = '' },
     } = useRouter();
-    const [msgs, setMsgs] = useState<MsgType[]>(smsgs);
+    const [msgs, setMsgs] = useState(smsgs);
     const [editingId, setEditingId] = useState<string | null>(null);
     const fetchMoreEl = useRef(null);
+    const intersecting = useInfiniteScroll(fetchMoreEl);
 
     function doneEdit() {
         setEditingId(null);
@@ -59,14 +61,28 @@ export default function MsgList({ smsgs, users }) {
         },
     });
 
-    const { data, error, isError }: { data: any; error: any; isError: any } = useQuery(QueryKeys.MESSAGES, () => fetcher(GET_MESSAGES));
+    const { data, error, isError, hasNextPage, fetchNextPage } = useInfiniteQuery(
+        QueryKeys.MESSAGES,
+        ({ pageParam = '' }) => fetcher(GET_MESSAGES, { cursor: pageParam }),
+        {
+            getNextPageParam: ({ messages }) => {
+                return messages?.[messages.length - 1]?.id;
+            },
+        },
+    );
 
     useEffect(() => {
-        if (!data?.messages) return;
-        setMsgs(data?.messages || []);
-    }, [data?.messages]);
+        if (!data?.pages) return;
+        const mergedMsgs = data.pages.flatMap((d: any) => d.messages);
+        console.log(mergedMsgs);
+        setMsgs(mergedMsgs);
+    }, [data?.pages]);
 
     if (isError) return null;
+
+    useEffect(() => {
+        if (intersecting && hasNextPage) fetchNextPage();
+    }, [intersecting]);
 
     return (
         <>

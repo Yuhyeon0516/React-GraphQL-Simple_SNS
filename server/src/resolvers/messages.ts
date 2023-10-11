@@ -9,8 +9,9 @@ context: 로그인한 사용자, DB Access 등의 중요 정보
 */
 const messagesResolver = {
     Query: {
-        messages: (parent, args, { db }) => {
-            return db.messages;
+        messages: (parent, { cursor = '' }, { db }) => {
+            const fromIndex = db.messages.findIndex((msg) => msg.id === cursor) + 1;
+            return db.messages?.slice(fromIndex, fromIndex + 15) || [];
         },
         message: (parent, { id = '' }, { db }) => {
             return db.messages.find((msg) => msg.id === id);
