@@ -71,8 +71,6 @@ export default function MsgList() {
         });
     }
 
-    console.log(JSON.stringify(msgs));
-
     return (
         <>
             <MsgInput mutate={onCreate} text="" />
