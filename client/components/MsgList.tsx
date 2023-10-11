@@ -54,7 +54,7 @@ export default function MsgList() {
         });
 
         setMsgs((msgs) => {
-            const targetIndex = msgs.findIndex((msg) => msg.id === receivedId);
+            const targetIndex = msgs.findIndex((msg) => msg.id === JSON.stringify(receivedId));
             if (targetIndex < 0) return msgs;
 
             const newMsgs = [...msgs];
