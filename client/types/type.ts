@@ -14,4 +14,5 @@ export interface MsgItemProps {
     isEditing: boolean;
     startEdit: () => void;
     onDelete: () => void;
+    myId: string | string[];
 }

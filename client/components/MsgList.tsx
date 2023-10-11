@@ -3,26 +3,22 @@ import { MsgType } from '../types/type';
 import MsgItem from './MsgItem';
 import MsgInput from './MsgInput';
 import fetcher from '../utils/fetcher';
-
-const UserIds = ['roy', 'jay'];
-
-function getRandomUserId() {
-    return UserIds[Math.round(Math.random())];
-}
+import { useRouter } from 'next/router';
 
 export default function MsgList() {
+    const {
+        query: { userId = '' },
+    } = useRouter();
     const [msgs, setMsgs] = useState<MsgType[]>([]);
     const [editingId, setEditingId] = useState<number | null>(null);
 
-    function onCreate(text: string) {
-        const newMsg: MsgType = {
-            id: msgs.length + 1,
-            userId: getRandomUserId(),
-            timestamp: Date.now(),
-            text: `${msgs.length + 1} ${text}`,
-        };
+    async function onCreate(text: string) {
+        const newMsg = await fetcher.post('/messages', {
+            text: text,
+            userId: userId,
+        });
 
-        setMsgs((msgs) => [newMsg, ...msgs]);
+        setMsgs((msgs) => [newMsg.data, ...msgs]);
     }
 
     function onUpdate(text: string, id: number) {
@@ -79,6 +75,7 @@ export default function MsgList() {
                         startEdit={() => setEditingId(msg.id)}
                         isEditing={editingId === msg.id}
                         onDelete={() => onDelete(msg.id)}
+                        myId={userId}
                     />
                 ))}
             </ul>
