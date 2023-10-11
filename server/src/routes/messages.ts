@@ -1,8 +1,8 @@
 import { v4 } from 'uuid';
 import { readDB, writeDB } from '../dbController';
-import { MessagesRouteType, MsgType } from '../types/type';
+import { RouteType, MsgType } from '../types/type';
 
-const messagesRoute: MessagesRouteType[] = [
+const messagesRoute: RouteType[] = [
     {
         // get message
         method: 'get',
