@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import messagesRoute from './routes/messages';
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -11,6 +12,10 @@ app.use(
         credentials: true,
     }),
 );
+
+messagesRoute.forEach(({ method, route, handler }) => {
+    app[method](route, handler);
+});
 
 app.listen(8000, () => {
     console.log('server listening on 8000');
