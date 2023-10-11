@@ -48,9 +48,13 @@ export default function MsgList() {
         setEditingId(null);
     }
 
-    function onDelete(id: string) {
+    async function onDelete(id: string) {
+        const { data: receivedId } = await fetcher.put(`/messages/delete/${id}`, {
+            userId: userId,
+        });
+
         setMsgs((msgs) => {
-            const targetIndex = msgs.findIndex((msg) => msg.id === id);
+            const targetIndex = msgs.findIndex((msg) => msg.id === receivedId);
             if (targetIndex < 0) return msgs;
 
             const newMsgs = [...msgs];
