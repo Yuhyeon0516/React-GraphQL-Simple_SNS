@@ -61,8 +61,23 @@ const messagesRoute: MessagesRouteType[] = [
         method: 'delete',
         route: '/messages/:id',
         handler: (req, res) => {
-            const msgs = readDB('messages');
-            res.send();
+            const {
+                body,
+                params: { id },
+            } = req;
+
+            try {
+                const msgs = readDB('messages');
+                const targetIndex = msgs.findIndex((msg) => msg.id === id);
+                if (targetIndex < 0) throw '메시지가 없습니다.';
+                if (msgs[targetIndex].userId === body.userId) throw '사용자가 다릅니다.';
+
+                msgs.splice(targetIndex, 1);
+                writeDB('messages', msgs);
+                res.send(id);
+            } catch (error) {
+                res.status(500).send({ error: error });
+            }
         },
     },
 ];
