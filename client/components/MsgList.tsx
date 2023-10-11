@@ -10,7 +10,7 @@ export default function MsgList() {
         query: { userId = '' },
     } = useRouter();
     const [msgs, setMsgs] = useState<MsgType[]>([]);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     async function onCreate(text: string) {
         const newMsg = await fetcher.post('/messages', {
@@ -18,19 +18,25 @@ export default function MsgList() {
             userId: userId,
         });
 
+        if (!newMsg) return;
+
         setMsgs((msgs) => [newMsg.data, ...msgs]);
     }
 
-    function onUpdate(text: string, id: number) {
+    async function onUpdate(text: string, id: string) {
+        const newMsg = await fetcher.put(`/messages/${id}`, {
+            text: text,
+            userId: userId,
+        });
+
+        if (!newMsg.data) return;
+
         setMsgs((msgs) => {
             const targetIndex = msgs.findIndex((msg) => msg.id === id);
             if (targetIndex < 0) return msgs;
 
             const newMsgs = [...msgs];
-            newMsgs.splice(targetIndex, 1, {
-                ...msgs[targetIndex],
-                text,
-            });
+            newMsgs.splice(targetIndex, 1, newMsg.data);
 
             return newMsgs;
         });
@@ -42,7 +48,7 @@ export default function MsgList() {
         setEditingId(null);
     }
 
-    function onDelete(id: number) {
+    function onDelete(id: string) {
         setMsgs((msgs) => {
             const targetIndex = msgs.findIndex((msg) => msg.id === id);
             if (targetIndex < 0) return msgs;

@@ -5,8 +5,8 @@ export default function MsgInput({
     id = undefined,
     text,
 }: {
-    mutate: ((text: string) => void) | ((text: string, id?: number) => void);
-    id?: number | undefined;
+    mutate: ((text: string) => void) | ((text: string, id?: string) => void);
+    id?: string | undefined;
     text: string;
 }) {
     const textRef = useRef<HTMLTextAreaElement | null>(null);

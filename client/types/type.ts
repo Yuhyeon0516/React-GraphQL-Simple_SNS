@@ -1,16 +1,16 @@
 export interface MsgType {
-    id: number;
+    id: string;
     userId: string;
     timestamp: number;
     text: string;
 }
 
 export interface MsgItemProps {
-    id: number;
+    id: string;
     userId: string;
     timestamp: number;
     text: string;
-    onUpdate: (text: string, id: number) => void;
+    onUpdate: (text: string, id: string) => void;
     isEditing: boolean;
     startEdit: () => void;
     onDelete: () => void;
