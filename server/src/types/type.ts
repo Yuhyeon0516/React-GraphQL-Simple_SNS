@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-export interface MessagesRouteType {
+export interface RouteType {
     method: string;
     route: string;
     handler: (req: Request, res: Response) => void;
