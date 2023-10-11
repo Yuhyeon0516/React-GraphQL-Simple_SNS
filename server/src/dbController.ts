@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { resolve } from 'path';
+import { MsgType } from './types/type';
 
 const basePath = resolve();
 
@@ -10,7 +11,7 @@ const filenames = {
 
 type Target = 'messages' | 'users';
 
-export function readDB(target: Target) {
+export function readDB(target: Target): MsgType[] {
     try {
         return JSON.parse(fs.readFileSync(filenames[target], 'utf-8'));
     } catch (error) {
