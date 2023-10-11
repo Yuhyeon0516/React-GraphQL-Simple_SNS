@@ -2,84 +2,71 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MsgType } from '../types/type';
 import MsgItem from './MsgItem';
 import MsgInput from './MsgInput';
-import fetcher from '../utils/fetcher';
 import { useRouter } from 'next/router';
-import useInfiniteScroll from '../hooks/useInfiniteScroll';
+import { QueryKeys, fetcher } from '../utils/queryClient';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { CREATE_MESSAGE, DELETE_MESSAGE, GET_MESSAGES, UPDATE_MESSAGE } from '../graphql/messages';
 
-export default function MsgList({ smsgs }) {
+export default function MsgList({ smsgs, users }) {
+    const client = useQueryClient();
     const {
         query: { userId = '' },
     } = useRouter();
     const [msgs, setMsgs] = useState<MsgType[]>(smsgs);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [hasNext, setHasNext] = useState(true);
     const fetchMoreEl = useRef(null);
-    const intersecting = useInfiniteScroll(fetchMoreEl);
-
-    async function onCreate(text: string) {
-        const newMsg = await fetcher.post('/messages', {
-            text: text,
-            userId: userId,
-        });
-
-        if (!newMsg) return;
-
-        setMsgs((msgs) => [newMsg.data, ...msgs]);
-    }
-
-    async function onUpdate(text: string, id: string) {
-        const newMsg = await fetcher.put(`/messages/${id}`, {
-            text: text,
-            userId: userId,
-        });
-
-        if (!newMsg.data) return;
-
-        setMsgs((msgs) => {
-            const targetIndex = msgs.findIndex((msg) => msg.id === id);
-            if (targetIndex < 0) return msgs;
-
-            const newMsgs = [...msgs];
-            newMsgs.splice(targetIndex, 1, newMsg.data);
-
-            return newMsgs;
-        });
-
-        doneEdit();
-    }
 
     function doneEdit() {
         setEditingId(null);
     }
 
-    async function onDelete(id: string) {
-        const { data: receivedId } = await fetcher.put(`/messages/delete/${id}`, {
-            userId: userId,
-        });
+    const { mutate: onCreate } = useMutation(({ text }: { text: string }) => fetcher(CREATE_MESSAGE, { text, userId }), {
+        onSuccess: ({ createMessage }) => {
+            client.setQueryData(QueryKeys.MESSAGES, (old: any) => {
+                if (!old) return { pages: [{ messages: [createMessage] }], pageParams: '' };
+                return {
+                    messages: [createMessage, ...old.messages],
+                };
+            });
+        },
+    });
 
-        setMsgs((msgs) => {
-            const targetIndex = msgs.findIndex((msg) => msg.id === JSON.stringify(receivedId));
-            if (targetIndex < 0) return msgs;
+    const { mutate: onUpdate } = useMutation(({ text, id }: { text: string; id: string }) => fetcher(UPDATE_MESSAGE, { text, id, userId }), {
+        onSuccess: ({ updateMessage }) => {
+            client.setQueryData(QueryKeys.MESSAGES, (old: any) => {
+                const targetIndex = old.messages.findIndex((msg) => msg.id === updateMessage.id);
+                if (targetIndex < 0) return old;
 
-            const newMsgs = [...msgs];
-            newMsgs.splice(targetIndex, 1);
+                const newMsgs = [...old.messages];
+                newMsgs.splice(targetIndex, 1, updateMessage);
+                return { messages: newMsgs };
+            });
 
-            return newMsgs;
-        });
-    }
+            doneEdit();
+        },
+    });
 
-    async function getMessages() {
-        const newMsgs = await fetcher.get('/messages', { params: { cursor: msgs[msgs.length - 1]?.id || '' } });
-        if (newMsgs.data.length === 0) {
-            setHasNext(false);
-            return;
-        }
-        setMsgs((msgs) => [...msgs, ...newMsgs.data]);
-    }
+    const { mutate: onDelete } = useMutation((id: string) => fetcher(DELETE_MESSAGE, { id, userId }), {
+        onSuccess: ({ deleteMessage }) => {
+            client.setQueryData(QueryKeys.MESSAGES, (old: any) => {
+                const targetIndex = old.messages.findIndex((msg) => msg.id === deleteMessage);
+                if (targetIndex < 0) return old;
+
+                const newMsgs = [...old.messages];
+                newMsgs.splice(targetIndex, 1);
+                return { messages: newMsgs };
+            });
+        },
+    });
+
+    const { data, error, isError }: { data: any; error: any; isError: any } = useQuery(QueryKeys.MESSAGES, () => fetcher(GET_MESSAGES));
 
     useEffect(() => {
-        if (intersecting && hasNext) getMessages();
-    }, [intersecting]);
+        if (!data?.messages) return;
+        setMsgs(data?.messages || []);
+    }, [data?.messages]);
+
+    if (isError) return null;
 
     return (
         <>
